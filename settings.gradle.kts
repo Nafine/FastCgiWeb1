@@ -1,0 +1,2 @@
+rootProject.name = "FastCgiWeb1"
+
