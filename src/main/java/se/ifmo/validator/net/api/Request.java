@@ -1,4 +1,3 @@
 package se.ifmo.validator.net.api;
 
-public class Request {
-}
+public record Request(double x, double y, double r) {}

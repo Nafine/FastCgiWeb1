@@ -1,4 +1,4 @@
 package se.ifmo.validator.net.api;
 
-public class Response {
+public record Response(boolean hit, long execTime) {
 }
