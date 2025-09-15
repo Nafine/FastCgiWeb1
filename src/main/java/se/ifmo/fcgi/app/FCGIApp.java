@@ -12,10 +12,6 @@ import java.nio.file.Path;
 public abstract class FCGIApp<Request, Response> implements Runnable, HTTPAdapter<Request, Response> {
     @Override
     public void run() {
-        try {
-            Files.createFile(Path.of("out.txt"));
-        } catch (Exception ignored) {
-        }
         while (new FCGIInterface().FCGIaccept() >= 0) {
             handle();
         }

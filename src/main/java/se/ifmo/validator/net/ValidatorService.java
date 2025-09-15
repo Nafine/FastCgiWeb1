@@ -1,6 +1,7 @@
 package se.ifmo.validator.net;
 
 import se.ifmo.fcgi.app.FCGIApp;
+import se.ifmo.fcgi.http.exception.ParseException;
 import se.ifmo.validator.net.api.Request;
 import se.ifmo.validator.net.api.Response;
 
@@ -20,22 +21,22 @@ public class ValidatorService extends FCGIApp<Request, Response> {
     }
 
     @Override
-    public Request toRequest(String httpRequest) {
+    public Request toRequest(String httpRequest) throws ParseException {
         String[] query = httpRequest.split("&");
         if (query.length < 3) {
-            throw new IllegalArgumentException("Invalid HTTP Request: you must provide at least 3 query parameters.");
+            throw new ParseException("Invalid HTTP Request: you must provide at least 3 query parameters.");
         }
 
         Double x = null, y = null, r = null;
         for (String fragment : query) {
             if (fragment.length() < 3)
-                throw new IllegalArgumentException("Invalid HTTP Request: you must provide value to a query parameter.");
+                throw new ParseException("Invalid HTTP Request: you must provide value to a query parameter.");
             if (fragment.startsWith("x")) x = Double.parseDouble(fragment.substring(2));
             else if (fragment.startsWith("y")) y = Double.parseDouble(fragment.substring(2));
             else if (fragment.startsWith("r")) r = Double.parseDouble(fragment.substring(2));
         }
         if (x == null || y == null || r == null)
-            throw new IllegalArgumentException("Invalid HTTP Request: you must provide x, y, and r values.");
+            throw new ParseException("Invalid HTTP Request: you must provide x, y, and r values.");
         return new Request(x, y, r);
     }
 

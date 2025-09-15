@@ -1,0 +1,1 @@
+scp build/libs/* itmo:~/web/web1/webapp/server/server.jar
