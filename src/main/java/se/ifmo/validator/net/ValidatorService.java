@@ -6,6 +6,10 @@ import se.ifmo.validator.net.api.Request;
 import se.ifmo.validator.net.api.Response;
 
 public class ValidatorService extends FCGIApp<Request, Response> {
+    {
+        registerMethod("GET");
+    }
+
     @Override
     public Response process(Request request) {
         long begin = System.nanoTime();

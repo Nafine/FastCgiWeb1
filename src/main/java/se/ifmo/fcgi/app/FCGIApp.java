@@ -3,13 +3,13 @@ package se.ifmo.fcgi.app;
 import com.fastcgi.FCGIInterface;
 import se.ifmo.fcgi.http.HTTPAdapter;
 
-import java.io.FileOutputStream;
-import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class FCGIApp<Request, Response> implements Runnable, HTTPAdapter<Request, Response> {
+    private final Set<String> allowedMethods = new HashSet<>();
+
     @Override
     public void run() {
         while (new FCGIInterface().FCGIaccept() >= 0) {
@@ -17,8 +17,16 @@ public abstract class FCGIApp<Request, Response> implements Runnable, HTTPAdapte
         }
     }
 
+    protected void registerMethod(String method) {
+        allowedMethods.add(method);
+    }
+
     private void handle() {
         try {
+            if (!allowedMethods.contains(FCGIInterface.request.params.getProperty("REQUEST_METHOD"))) {
+                System.out.println("Method not allowed.");
+            }
+
             Request rq = toRequest(FCGIInterface.request.params.getProperty("QUERY_STRING"));
             Response rs = process(rq);
             String rsStr = toHTTPResponse(rs);
