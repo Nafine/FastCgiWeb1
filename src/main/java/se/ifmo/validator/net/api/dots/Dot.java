@@ -1,11 +1,11 @@
 package se.ifmo.validator.net.api.dots;
 
 import se.ifmo.validator.net.api.hit.HitRequest;
+import se.ifmo.validator.net.api.hit.HitResponse;
 
-public record Dot(HitRequest req, Boolean hit) {
+public record Dot(HitRequest req, HitResponse res) {
     public String json() {
         return """
-                {"dot": {"x": %f, "y": %f, "r": %f}, "hit": %b}"""
-                .formatted(req.x(), req.y(), req.r(), hit);
+                {"req": %s, "resp": %s}""".formatted(req.json(), res.json());
     }
 }

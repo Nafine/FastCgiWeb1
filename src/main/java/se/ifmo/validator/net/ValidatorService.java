@@ -6,16 +6,20 @@ import se.ifmo.validator.net.api.dots.Dot;
 import se.ifmo.validator.net.api.dots.DotsRequest;
 import se.ifmo.validator.net.api.dots.DotsResponse;
 import se.ifmo.validator.net.api.hit.HitRequest;
+import se.ifmo.validator.net.api.hit.HitResponse;
 import se.ifmo.validator.net.parse.ParseException;
 import se.ifmo.validator.net.parse.QueryParser;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class ValidatorService implements Runnable {
+    private final Logger logger = Logger.getLogger(this.getClass().getName());
     private final FCGIApp fcgiApp;
 
-    private final LinkedHashMap<HitRequest, Boolean> cache = new LinkedHashMap<>();
+    private final LinkedHashMap<HitRequest, HitResponse> cache = new LinkedHashMap<>();
 
     public ValidatorService() {
         fcgiApp = new FCGIApp();
@@ -33,11 +37,15 @@ public class ValidatorService implements Runnable {
         long begin = System.nanoTime();
         HitRequest req = parseHitRequest();
 
-        cache.computeIfAbsent(req, k -> validateCoordinates(req.x(), req.y(), req.r()));
-        writeHitResponse(cache.get(req), System.nanoTime() - begin);
+        cache.computeIfAbsent(req, k -> new HitResponse(validateCoordinates(req.x(), req.y(), req.r()),
+                LocalDateTime.now(), System.nanoTime() - begin));
+
+        HitResponse resp = cache.get(req);
+        writeHitResponse(resp);
         if (cache.size() > 10000) {
             cache.remove(cache.lastEntry().getKey());
         }
+        logger.info("Cache size: " + cache.size());
     }
 
     private HitRequest parseHitRequest() throws ParseException {
@@ -65,22 +73,19 @@ public class ValidatorService implements Runnable {
         );
     }
 
-    private void writeHitResponse(Boolean hit, long time) {
+    private void writeHitResponse(HitResponse resp) {
         String respStr = """
                 HTTP/1.1 200 OK\r
                 Content-Type: application/json\r
                 Content-Length: %d\r
                 \r
                 %s""";
-        String body = """
-                {"hit": %b, "time": %d}
-                """.formatted(hit, time);
+        String body = resp.json();
         System.out.printf(respStr, body.getBytes(StandardCharsets.UTF_8).length, body);
     }
 
     private void processDots() throws ParseException {
         DotsRequest req = parseDotsRequest();
-
 
         List<Dot> cached = new ArrayList<>();
 
@@ -94,7 +99,8 @@ public class ValidatorService implements Runnable {
 
         for (HitRequest rq : cache.sequencedKeySet().stream()
                 .toList().subList(from, to)) {
-            cached.add(new Dot(rq, cache.get(rq)));
+            HitResponse resp = cache.get(rq);
+            cached.add(new Dot(rq, resp));
         }
 
         boolean hasBefore = req.page() != 1;
